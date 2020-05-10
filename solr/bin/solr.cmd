@@ -1187,12 +1187,23 @@ IF "%ENABLE_REMOTE_JMX_OPTS%"=="true" (
   set REMOTE_JMX_OPTS=
 )
 
-REM Enable java security manager (limiting filesystem access and other things)
+REM Enable java security manager by default (limiting filesystem access and other things)
+IF NOT DEFINED SOLR_SECURITY_MANAGER_ENABLED (
+  set SOLR_SECURITY_MANAGER_ENABLED=true
+)
+
 IF "%SOLR_SECURITY_MANAGER_ENABLED%"=="true" (
   set SECURITY_MANAGER_OPTS=-Djava.security.manager ^
 -Djava.security.policy="%SOLR_SERVER_DIR%\etc\security.policy" ^
 -Djava.security.properties="%SOLR_SERVER_DIR%\etc\security.properties" ^
 -Dsolr.internal.network.permission=*
+)
+
+REM Enable ADMIN UI by default, and give the option for users to disable it
+IF "%SOLR_ADMIN_UI_DISABLED%"=="true" (
+  set DISABLE_ADMIN_UI="true"
+) else (
+  set DISABLE_ADMIN_UI="false"
 )
 
 IF NOT "%SOLR_HEAP%"=="" set SOLR_JAVA_MEM=-Xms%SOLR_HEAP% -Xmx%SOLR_HEAP%
@@ -1280,7 +1291,11 @@ IF "%verbose%"=="1" (
 )
 
 set START_OPTS=-Duser.timezone=%SOLR_TIMEZONE%
+REM '-OmitStackTraceInFastThrow' ensures stack traces in errors,
+REM users who don't care about useful error msgs can override in SOLR_OPTS with +OmitStackTraceInFastThrow
+set "START_OPTS=%START_OPTS% -XX:-OmitStackTraceInFastThrow"
 set START_OPTS=%START_OPTS% !GC_TUNE! %GC_LOG_OPTS%
+set START_OPTS=%START_OPTS% -DdisableAdminUI=%DISABLE_ADMIN_UI%
 IF NOT "!CLOUD_MODE_OPTS!"=="" set "START_OPTS=%START_OPTS% !CLOUD_MODE_OPTS!"
 IF NOT "!IP_ACL_OPTS!"=="" set "START_OPTS=%START_OPTS% !IP_ACL_OPTS!"
 IF NOT "%REMOTE_JMX_OPTS%"=="" set "START_OPTS=%START_OPTS% %REMOTE_JMX_OPTS%"

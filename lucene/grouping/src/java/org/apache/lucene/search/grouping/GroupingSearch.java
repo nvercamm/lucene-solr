@@ -42,7 +42,7 @@ import org.apache.lucene.util.mutable.MutableValue;
  */
 public class GroupingSearch {
 
-  private final GroupSelector grouper;
+  private final GroupSelector<?> grouper;
   private final Query groupEndDocs;
 
   private Sort groupSort = Sort.RELEVANCE;
@@ -71,6 +71,10 @@ public class GroupingSearch {
     this(new TermGroupSelector(groupField), null);
   }
 
+  public GroupingSearch(GroupSelector<?> groupSelector) {
+    this(groupSelector, null);
+  }
+
   /**
    * Constructs a <code>GroupingSearch</code> instance that groups documents by function using a {@link ValueSource}
    * instance.
@@ -92,7 +96,7 @@ public class GroupingSearch {
     this(null, groupEndDocs);
   }
 
-  private GroupingSearch(GroupSelector grouper, Query groupEndDocs) {
+  private GroupingSearch(GroupSelector<?> grouper, Query groupEndDocs) {
     this.grouper = grouper;
     this.groupEndDocs = groupEndDocs;
   }

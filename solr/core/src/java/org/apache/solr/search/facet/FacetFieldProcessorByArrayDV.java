@@ -46,7 +46,7 @@ class FacetFieldProcessorByArrayDV extends FacetFieldProcessorByArray {
   SortedSetDocValues si;  // only used for term lookups (for both single and multi-valued)
   OrdinalMap ordinalMap = null; // maps per-segment ords to global ords
 
-  FacetFieldProcessorByArrayDV(FacetContext fcontext, FacetField freq, SchemaField sf) {
+  FacetFieldProcessorByArrayDV(FacetRequest.FacetContext fcontext, FacetField freq, SchemaField sf) {
     super(fcontext, freq, sf);
     multiValuedField = sf.multiValued() || sf.getType().multiValuedFieldCache();
   }
@@ -324,6 +324,8 @@ class FacetFieldProcessorByArrayDV extends FacetFieldProcessorByArray {
     int ord = (toGlobal != null && segOrd >= 0) ? (int)toGlobal.get(segOrd) : segOrd;
 
     int arrIdx = ord - startTermIndex;
+    // This code handles faceting prefixes, which narrows the range of ords we want to collect.
+    // It’s not an error for an ord to fall outside this range… we simply want to skip it.
     if (arrIdx >= 0 && arrIdx < nTerms) {
       countAcc.incrementCount(arrIdx, 1);
       if (collectAcc != null) {

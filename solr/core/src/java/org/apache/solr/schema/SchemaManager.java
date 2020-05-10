@@ -155,7 +155,7 @@ public class SchemaManager {
       waitForOtherReplicasToUpdate(timeOut, latestVersion);
     }
     if (errors.isEmpty() && timeOut.hasTimedOut()) {
-      log.warn(errorMsg + "Timed out.");
+      log.warn("{} Timed out", errorMsg);
       errors = singletonList(errorMsg + "Timed out.");
     }
     return errors;
@@ -422,12 +422,13 @@ public class SchemaManager {
     SolrResourceLoader resourceLoader = core.getResourceLoader();
     String name = core.getLatestSchema().getResourceName();
     if (resourceLoader instanceof ZkSolrResourceLoader) {
-      SolrZkClient zkClient = ((ZkSolrResourceLoader) resourceLoader).getZkController().getZkClient();
+      final ZkSolrResourceLoader zkLoader = (ZkSolrResourceLoader)resourceLoader;
+      SolrZkClient zkClient = zkLoader.getZkController().getZkClient();
       try {
-        if (!zkClient.exists(name, true)) {
+        if (!zkClient.exists(zkLoader.getConfigSetZkPath() + "/" + name, true)) {
           String backupName = name + ManagedIndexSchemaFactory.UPGRADED_SCHEMA_EXTENSION;
-          if (!zkClient.exists(backupName, true)) {
-            log.warn("Unable to retrieve fresh managed schema, neither " + name + " nor " + backupName + " exist.");
+          if (!zkClient.exists(zkLoader.getConfigSetZkPath() + "/" + backupName, true)) {
+            log.warn("Unable to retrieve fresh managed schema, neither {} nor {} exist.", name, backupName);
             // use current schema
             return (ManagedIndexSchema) core.getLatestSchema();
           } else {
@@ -435,7 +436,7 @@ public class SchemaManager {
           }
         }
       } catch (Exception e) {
-        log.warn("Unable to retrieve fresh managed schema " + name, e);
+        log.warn("Unable to retrieve fresh managed schema {}", name, e);
         // use current schema
         return (ManagedIndexSchema) core.getLatestSchema();
       }
